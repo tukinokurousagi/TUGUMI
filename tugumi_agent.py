@@ -116,7 +116,7 @@ class ProgressTracker:
         self.lock = threading.Lock()
         self.status_history = []
         self.last_update = datetime.now()
-        self.frozen_check_threshold = 30  # 秒
+        self.frozen_check_threshold = 3  # 秒
     
     def update(self, status: TaskStatus, task: str = "", subtask: str = "", progress: int = 0):
         """進捗状況を更新"""
@@ -209,7 +209,7 @@ class ToolExecutor:
             headers = {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
             }
-            response = requests.get(url, headers=headers, timeout=20)
+            response = requests.get(url, headers=headers, timeout=600)
             response.encoding = response.apparent_encoding or 'utf-8'
             
             soup = BeautifulSoup(response.content, 'html.parser')
@@ -272,7 +272,7 @@ class ToolExecutor:
             self.logger.log("ERROR", f"✗ パッケージインストール例外: {str(e)}")
             return False, str(e)
     
-    def execute_command(self, command: str, timeout: int = 60) -> Tuple[bool, str]:
+    def execute_command(self, command: str, timeout: int = 600) -> Tuple[bool, str]:
         """シェルコマンドを実行 - subprocess経由の外部ツール実行"""
         self.logger.log("DEBUG", f"⚙️  コマンド実行: {command}")
         self.progress.update(TaskStatus.EXECUTING, subtask=f"コマンド: {command[:40]}")
@@ -315,7 +315,7 @@ class LocalLLMInterface:
             self.logger.log("DEBUG", f"LLMサーバー接続確認: {self.base_url}")
         
         try:
-            response = requests.get(f"{self.base_url}/health", timeout=5)
+            response = requests.get(f"{self.base_url}/health", timeout=300)
             self.is_healthy = response.status_code == 200
             if self.logger:
                 status = "✓ 接続成功" if self.is_healthy else "✗ 接続失敗"
@@ -335,7 +335,7 @@ class LocalLLMInterface:
             self.is_healthy = False
             return False
     
-    def generate(self, prompt: str, timeout: int = 300) -> str:
+    def generate(self, prompt: str, timeout: int = 600) -> str:
         """テキスト生成 - タイムアウト対応"""
         if not self.check_health():
             if self.logger:
@@ -456,7 +456,7 @@ class TUGUMIAgent:
 成功条件: [成功の定義]
 """
         
-        response = self.llm.generate(prompt, timeout=120)
+        response = self.llm.generate(prompt, timeout=600)
         if not response:
             self.logger.log("ERROR", "✗ LLMからの応答がありません")
             state["error_log"].append("目標理解: LLM生成失敗")
@@ -495,7 +495,7 @@ class TUGUMIAgent:
 (以下、ステップ2以降も同様)
 """
         
-        response = self.llm.generate(prompt, timeout=120)
+        response = self.llm.generate(prompt, timeout=600)
         if not response:
             state["error_log"].append("計画立案: LLM生成失敗")
             return state
@@ -552,7 +552,7 @@ class TUGUMIAgent:
 【回答】
 """
         
-        action = self.llm.generate(action_prompt, timeout=60).strip()
+        action = self.llm.generate(action_prompt, timeout=600).strip()
         self.logger.log("DEBUG", f"決定アクション: {action[:100]}")
         
         # アクション実行
@@ -683,7 +683,7 @@ class TUGUMIAgent:
 修正内容: [必要があれば記載]
 """
         
-        evaluation = self.llm.generate(eval_prompt, timeout=60).strip()
+        evaluation = self.llm.generate(eval_prompt, timeout=600).strip()
         self.logger.log("DEBUG", f"評価結果: {evaluation[:100]}")
         state["observations"].append(f"評価: {evaluation[:150]}")
         
@@ -738,7 +738,7 @@ class TUGUMIAgent:
 【修正提案】
 """
         
-        correction = self.llm.generate(correct_prompt, timeout=60).strip()
+        correction = self.llm.generate(correct_prompt, timeout=600).strip()
         self.logger.log("INFO", f"修正提案: {correction[:100]}")
         
         # 計画を修正
@@ -772,7 +772,7 @@ class TUGUMIAgent:
 
 """
         
-        final_result = self.llm.generate(summary_prompt, timeout=120).strip()
+        final_result = self.llm.generate(summary_prompt, timeout=600).strip()
         state["final_result"] = final_result if final_result else "タスクを完了しました"
         
         # 学習情報を保存
