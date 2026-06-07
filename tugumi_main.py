@@ -149,7 +149,7 @@ class ToolExecutor:
             headers = {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
             }
-            response = requests.get(url, headers=headers, timeout=15)
+            response = requests.get(url, headers=headers, timeout=500)
             response.encoding = response.apparent_encoding or 'utf-8'
             
             soup = BeautifulSoup(response.content, 'html.parser')
@@ -195,7 +195,7 @@ class ToolExecutor:
                 [sys.executable, "-m", "pip", "install", package],
                 capture_output=True,
                 text=True,
-                timeout=120
+                timeout=600
             )
             if result.returncode == 0:
                 self.logger.log("INFO", f"パッケージインストール成功: {package}")
@@ -210,7 +210,7 @@ class ToolExecutor:
             self.logger.log("ERROR", f"パッケージインストール例外: {str(e)}")
             return False
     
-    def execute_command(self, command: str, timeout: int = 60) -> Tuple[bool, str]:
+    def execute_command(self, command: str, timeout: int = 600) -> Tuple[bool, str]:
         """シェルコマンドを実行"""
         self.logger.log("DEBUG", f"コマンド実行: {command}")
         self.progress.update(TaskStatus.EXECUTING, subtask=f"コマンド実行: {command}")
@@ -244,7 +244,7 @@ class LocalLLMInterface:
     def check_health(self) -> bool:
         """LLMサーバーのヘルスチェック"""
         try:
-            response = requests.get(f"{self.base_url}/health", timeout=5)
+            response = requests.get(f"{self.base_url}/health", timeout=600)
             return response.status_code == 200
         except Exception as e:
             if self.logger:
@@ -347,7 +347,7 @@ class TUGUMIAgent:
 
 目標を1行で定義してください:"""
         
-        response = self.llm.generate(prompt, timeout=60)
+        response = self.llm.generate(prompt, timeout=600)
         if not response:
             state["error_log"].append("LLM生成失敗")
             state["final_result"] = "LLMサーバーのエラー"
@@ -369,7 +369,7 @@ class TUGUMIAgent:
 
 ステップを番号付きで列挙してください:"""
         
-        response = self.llm.generate(prompt, timeout=60)
+        response = self.llm.generate(prompt, timeout=600)
         if not response:
             state["error_log"].append("計画立案失敗")
             return state
@@ -405,7 +405,7 @@ class TUGUMIAgent:
 
 アクションを1行で述べてください:"""
         
-        action = self.llm.generate(action_prompt, timeout=60).strip()
+        action = self.llm.generate(action_prompt, timeout=600).strip()
         self.logger.log("DEBUG", f"決定アクション: {action}")
         
         result = self._execute_action(action, state)
@@ -498,7 +498,7 @@ class TUGUMIAgent:
 
 成功しているか1単語で答えてください:"""
         
-        evaluation = self.llm.generate(eval_prompt, timeout=60).strip()
+        evaluation = self.llm.generate(eval_prompt, timeout=600).strip()
         self.logger.log("DEBUG", f"評価: {evaluation}")
         state["observations"].append(f"評価: {evaluation}")
         
@@ -527,7 +527,7 @@ class TUGUMIAgent:
 
 修正アプローチを1行で提案してください:"""
         
-        correction = self.llm.generate(correct_prompt, timeout=60).strip()
+        correction = self.llm.generate(correct_prompt, timeout=600).strip()
         self.logger.log("INFO", f"修正: {correction}")
         
         if state["current_step"] > 0:
@@ -548,7 +548,7 @@ class TUGUMIAgent:
 
 完了報告を日本語で1-2行で述べてください:"""
         
-        final_result = self.llm.generate(summary_prompt, timeout=60).strip()
+        final_result = self.llm.generate(summary_prompt, timeout=600).strip()
         state["final_result"] = final_result
         
         learning = {
