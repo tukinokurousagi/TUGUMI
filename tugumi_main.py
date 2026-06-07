@@ -19,8 +19,8 @@ from enum import Enum
 import threading
 import queue
 
-from langchain_community.llms import Ollama
-from langchain.prompts import PromptTemplate
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import PromptTemplate
 from langchain.schema import HumanMessage
 from langgraph.graph import StateGraph
 from typing import TypedDict
